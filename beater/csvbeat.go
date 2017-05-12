@@ -1,6 +1,7 @@
 package beater
 
 import (
+	"crypto/sha1"
 	"fmt"
 	"strings"
 	"time"
@@ -30,6 +31,7 @@ type Csvbeat struct {
 	config config.Config
 	client publisher.Client
 	state  *beatcsv.StateFile
+	beat   *beat.Beat
 }
 
 // Creates beater
@@ -43,6 +45,7 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 	bt := &Csvbeat{
 		done:   make(chan struct{}),
 		config: config,
+		beat:   b,
 	}
 	sfConf := map[string]string{
 		"filename":     config.StateFileName,
@@ -151,7 +154,7 @@ func (bt *Csvbeat) processAndPublishRow(headers []string, record []string, filen
 			timeParams := strings.Split(dateDomain[1], ":")
 			year, _ := strconv.Atoi(dateParams[2])
 			month, _ := strconv.Atoi(dateParams[0])
-			day, _ := strconv.Atoi(dateParams[0])
+			day, _ := strconv.Atoi(dateParams[1])
 			hour, _ := strconv.Atoi(timeParams[0])
 			mins, _ := strconv.Atoi(timeParams[1])
 			secs, _ := strconv.Atoi(timeParams[2])
@@ -185,10 +188,19 @@ func (bt *Csvbeat) processAndPublishRow(headers []string, record []string, filen
 	event["@timestamp"] = common.Time(timestampstring)
 	event["type"] = "transaction"
 	event["filename"] = filename
+	event["key"] = bt.getRowKey(event)
 	bt.client.PublishEvent(event)
 	logp.Info("Event sent")
 
 	return nil
+}
+
+func (bt *Csvbeat) getRowKey(event common.MapStr) string {
+	key, _ := bt.beat.Config.Output["logstash"].String("index", 0)
+	key = fmt.Sprintf("%s_%s_%s_%s", key, event["domain"], event["host"], event["metricname"])
+	h := sha1.New()
+	io.WriteString(h, key)
+	return fmt.Sprintf("%x", h.Sum(nil)) //b64.StdEncoding.EncodeToString([]byte(key))
 }
 
 func (bt *Csvbeat) downloadObject(object *s3.Object) (*csv.Reader, error) {

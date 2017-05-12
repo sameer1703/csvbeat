@@ -4,11 +4,11 @@
 
 csvbeat:
   # Defines how often an event is sent to the output
-  period: 1s
+  period: ${BEATS_PERIOD:1m}
   aws_access_key: ${AWS_ACCESS_KEY}
   aws_secret_access_key: ${AWS_SECRET_ACCESS_KEY}
   aws_s3_bucket_name: ${AWS_BUCKET_NAME}
-  aws_region: ${AWS_REGION}
+  aws_region: ${AWS_REGION:'us-east-1'}
   state_file_name: ${STATE_FILE_NAME}
   state_file_storage_type: ${STATE_FILE_STORAGE_TYPE}
   timestamp_format: ${TIMESTAMP_FORMAT}
@@ -35,10 +35,10 @@ name: csvbeat
 # Multiple outputs may be used.
 
 #-------------------------- Elasticsearch output ------------------------------
-output.elasticsearch:
+# output.elasticsearch:
   # Array of hosts to connect to.
-  hosts: ${ES_HOSTS:["localhost:9200"]}
-  index: ${INDEX_NAME:'bancolombia-csvbeat-transactions'}
+  # hosts: ${ES_HOSTS:["localhost:9200"]}
+  # index: ${INDEX_NAME:'bancolombia-csvbeat-transactions'}
 
   # Optional protocol and basic auth credentials.
   #protocol: "https"
@@ -46,9 +46,10 @@ output.elasticsearch:
   #password: "changeme"
 
 #----------------------------- Logstash output --------------------------------
-#output.logstash:
+output.logstash:
   # The Logstash hosts
-  #hosts: ["localhost:5044"]
+  hosts: ${LS_HOSTS:["localhost:5044"]}
+  index: ${INDEX_NAME:'bancolombia-csvbeat-transactions'}
 
   # Optional SSL. By default is off.
   # List of root certificates for HTTPS server verifications
