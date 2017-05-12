@@ -171,20 +171,7 @@ func (bt *Csvbeat) processAndPublishRow(headers []string, record []string, filen
 			event[header] = record[i]
 		}
 	}
-	// tmpl, err := template.New("timestamp").Parse(bt.config.TimestampTemplate)
-	// if err != nil {
-	// 	return err
-	// }
-	// buf := new(bytes.Buffer)
-	// err = tmpl.Execute(buf, event)
-	// if err != nil {
-	// 	return err
-	// }
 
-	// ts, err := time.Parse(bt.config.TimestampFormat, buf.String())
-	// if err != nil {
-	// 	return err
-	// }
 	event["@timestamp"] = common.Time(timestampstring)
 	event["type"] = "transaction"
 	event["filename"] = filename
