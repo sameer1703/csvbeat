@@ -1,7 +1,6 @@
 package beater
 
 import (
-	"crypto/sha1"
 	"fmt"
 	"strings"
 	"time"
@@ -177,19 +176,11 @@ func (bt *Csvbeat) processAndPublishRow(headers []string, record []string, filen
 	event["filename"] = filename
 	indexname, _ := bt.beat.Config.Output["logstash"].String("index", 0)
 	event["indexname"] = indexname
-	event["key"] = bt.getRowKey(event)
+
 	bt.client.PublishEvent(event)
 	logp.Info("Event sent")
 
 	return nil
-}
-
-func (bt *Csvbeat) getRowKey(event common.MapStr) string {
-	key, _ := bt.beat.Config.Output["logstash"].String("index", 0)
-	key = fmt.Sprintf("%s_%s_%s_%s_%s_%d", key, event["domain"], event["host"], event["metricname"], event["agentname"], event["correctedvalue"])
-	h := sha1.New()
-	io.WriteString(h, key)
-	return fmt.Sprintf("%x", h.Sum(nil)) //b64.StdEncoding.EncodeToString([]byte(key))
 }
 
 func (bt *Csvbeat) downloadObject(object *s3.Object) (*csv.Reader, error) {
