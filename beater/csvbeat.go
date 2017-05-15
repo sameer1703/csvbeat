@@ -175,6 +175,8 @@ func (bt *Csvbeat) processAndPublishRow(headers []string, record []string, filen
 	event["@timestamp"] = common.Time(timestampstring)
 	event["type"] = "transaction"
 	event["filename"] = filename
+	indexname, _ := bt.beat.Config.Output["logstash"].String("index", 0)
+	event["indexname"] = indexname
 	event["key"] = bt.getRowKey(event)
 	bt.client.PublishEvent(event)
 	logp.Info("Event sent")
@@ -184,7 +186,7 @@ func (bt *Csvbeat) processAndPublishRow(headers []string, record []string, filen
 
 func (bt *Csvbeat) getRowKey(event common.MapStr) string {
 	key, _ := bt.beat.Config.Output["logstash"].String("index", 0)
-	key = fmt.Sprintf("%s_%s_%s_%s", key, event["domain"], event["host"], event["metricname"])
+	key = fmt.Sprintf("%s_%s_%s_%s_%s_%d", key, event["domain"], event["host"], event["metricname"], event["agentname"], event["correctedvalue"])
 	h := sha1.New()
 	io.WriteString(h, key)
 	return fmt.Sprintf("%x", h.Sum(nil)) //b64.StdEncoding.EncodeToString([]byte(key))
